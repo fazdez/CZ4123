@@ -7,7 +7,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 public class ColumnStoreDisk extends ColumnStoreAbstract{
-    private static final int BUFFER_SIZE = 10240;
+    protected static final int BUFFER_SIZE = 10240;
 
     public ColumnStoreDisk(HashMap<String, Integer> columnDataTypes) {
         super(columnDataTypes);
@@ -43,22 +43,13 @@ public class ColumnStoreDisk extends ColumnStoreAbstract{
             }
 
             case INTEGER_DATATYPE -> {
-                ByteBuffer bbf = ByteBuffer.allocate(4);
-                if (toAdd == null) {
-                    bbf.putInt(Integer.MIN_VALUE);
-                } else {
-                    bbf.putInt((int)toAdd);
-                }
-                outputStream.write(bbf.array());
+                if (toAdd == null) { handleStoreInteger(outputStream, Integer.MIN_VALUE); }
+                else { handleStoreInteger(outputStream, (int)toAdd); }
             }
+
             case FLOAT_DATATYPE -> {
-                ByteBuffer bbf = ByteBuffer.allocate(4);
-                if (toAdd == null) {
-                    bbf.putFloat(Float.NaN);
-                } else {
-                    bbf.putFloat((float)toAdd);
-                }
-                outputStream.write(bbf.array());
+                if (toAdd == null) { handleStoreFloat(outputStream, Float.NaN); }
+                else { handleStoreFloat(outputStream, (float)toAdd); }
             }
             default -> outputStream.write("M\n".getBytes(StandardCharsets.UTF_8));
         }
@@ -347,6 +338,52 @@ public class ColumnStoreDisk extends ColumnStoreAbstract{
         } else {
             System.out.println("Wrong usage of this function (convertBytesToNumber). Should pass in only FLOAT or INTEGER dataType.");
             return null;
+        }
+    }
+
+    /**
+     * Append 4 bytes to the file representing a float.
+     * @param fileOutputStream the outputStream of the file.
+     * @param value integer to store
+     */
+    protected void handleStoreInteger(FileOutputStream fileOutputStream, int value) {
+        ByteBuffer bbf = ByteBuffer.allocate(4);
+        bbf.putInt(value);
+
+        try {
+            fileOutputStream.write(bbf.array());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Append 4 bytes to the file representing a float.
+     * @param fileOutputStream the outputStream of the file
+     * @param value float to store
+     */
+    protected void handleStoreFloat(FileOutputStream fileOutputStream, float value) {
+        ByteBuffer bbf = ByteBuffer.allocate(4);
+        bbf.putFloat(value);
+        try {
+            fileOutputStream.write(bbf.array());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Append 8 bytes to the file, representing a long.
+     * @param fileOutputStream the outputStream of the file
+     * @param value long to store
+     */
+    protected void handleStoreLong(FileOutputStream fileOutputStream, long value) {
+        ByteBuffer bbf = ByteBuffer.allocate(8);
+        bbf.putLong(value);
+        try {
+            fileOutputStream.write(bbf.array());
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }
