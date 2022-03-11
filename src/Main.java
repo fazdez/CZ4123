@@ -16,19 +16,13 @@ public class Main {
         dataTypes.put("Temperature", ColumnStore.FLOAT_DATATYPE);
         dataTypes.put("Humidity", ColumnStore.FLOAT_DATATYPE);
 
-        ColumnStoreAbstract cs = new ColumnStoreDisk(dataTypes);
+
+//        ColumnStoreAbstract cs = new ColumnStoreMM(dataTypes);
+//        ColumnStoreAbstract cs = new ColumnStoreDisk(dataTypes);
+        ColumnStoreAbstract cs = new ColumnStoreDiskEnhanced(dataTypes);
+
         try {
             cs.addCSVData("SingaporeWeather.csv");
-        } catch(Exception e) {
-            e.printStackTrace();
-        }
-
-//        System.out.println(cs.filter("Station", stn -> stn.equals("Paya Lebar")));
-//        System.out.println(cs.filter("Timestamp", time -> ((LocalDateTime)time).getYear() == 2002 && ((LocalDateTime)time).getMonthValue() == 1 &&
-//                ((LocalDateTime)time).getHour() == 0 && ((LocalDateTime)time).getMinute() == 0));
-//        System.out.println(cs.filter("Humidity", value -> (float)value == 24.19F));
-        cs.printHead(10);
-        try {
             List<Output> results = getExtremeValues(cs, 2009, "Paya Lebar");
             writeOutput("ScanResult.csv", results);
             results = getExtremeValues(cs, 2019, "Paya Lebar");
@@ -39,6 +33,11 @@ public class Main {
     }
 
     private static List<Output> getExtremeValues(ColumnStoreAbstract data, int year, String station) {
+        if (data instanceof ColumnStoreDiskEnhanced) {
+            return ((ColumnStoreDiskEnhanced) data).getExtremeValues(year, station); //use custom implementation
+        }
+
+
         List<Integer> yearIndices = data.filter("Timestamp", datum -> ((LocalDateTime)datum).getYear() == year);
         List<Integer> stationAndYearIndices = data.filter("Station", datum -> datum.equals(station), yearIndices);
         List<Output> result = new ArrayList<>();

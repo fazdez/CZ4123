@@ -20,7 +20,7 @@ public class ColumnStoreDisk extends ColumnStoreAbstract{
      * @param value value string
      * @throws IOException
      */
-    private void store(FileOutputStream outputStream, String column, String value) throws IOException {
+    protected void store(FileOutputStream outputStream, String column, String value) throws IOException {
         Object toAdd = castValueAccordingToColumnType(column, value);
         switch(columnDataTypes.get(column)) {
             case STRING_DATATYPE -> {
