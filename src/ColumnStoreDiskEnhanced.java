@@ -4,28 +4,66 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
+
 /**
- * This is a class that was created specific to the problem at hand.
+ * A specific column store implementation where the data is stored in disk. This is specific to the "SingaporeWeather.csv" input file given.
  *
  * Unlike ColumnStoreDisk and ColumnStoreMM, the class is not for general-use. The class
  * is just to show how to
- * 1. Perform shared scanning when calculating the extreme values.
- * 2. Compression of "Station" column from variable width (string) to a fixed 1-byte character.
- * 3. Fixing the variable-length string "Timestamp" to long (unix timestamp).
+ * <ul>
+ *     <li>Perform shared scanning when calculating extreme values.</li>
+ *     <li>Compression of "Station" column from variable width to a fixed 1-byte character.</li>
+ *     <li>"Timestamp" values stored as long.</li>
+ *     <li>Multi-threaded scans.</li>
+ * </ul>
+ *
  */
 public class ColumnStoreDiskEnhanced extends ColumnStoreDisk{
+    /**
+     * A byte representing null values for column "Station". This value is 'M' encoded in ASCII.
+     */
     private static final byte NULL_STATION = StandardCharsets.US_ASCII.encode("M").get(0);
+
+    /**
+     * A byte representing "Paya Lebar" for column "Station". This value is 'P' encoded in ASCII.
+     */
     private static final byte PAYA_LEBAR_STATION = StandardCharsets.US_ASCII.encode("P").get(0);
+
+    /**
+     * A byte representing "Changi" for column "Station". This value is 'C' encoded in ASCII.
+     */
     private static final byte CHANGI_STATION = StandardCharsets.US_ASCII.encode("C").get(0);
+
+    /**
+     * 8 bytes representing null values for column "Timestamp". This value is 0L.
+     */
     private static final long NULL_TIMESTAMP = 0;
+
+    /**
+     * For use in {@link #sharedScanningMaxMin(String, List)}
+     */
     private static final String MIN_KEY = "min";
+
+    /**
+     * For use in {@link #sharedScanningMaxMin(String, List)}
+     */
     private static final String MAX_KEY = "max";
+
+    /**
+     * Used when converting LocalDateTime to Epoch seconds(long).
+     */
     private static final ZoneOffset z = ZoneOffset.ofHours(+8);
 
+    /**
+     * {@inheritDoc}
+     */
     public ColumnStoreDiskEnhanced(HashMap<String, Integer> columnDataTypes) {
         super(columnDataTypes);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void store(FileOutputStream outputStream, String column, String value) {
         try {
@@ -56,6 +94,9 @@ public class ColumnStoreDiskEnhanced extends ColumnStoreDisk{
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getName() {
         return "enhanced_disk";

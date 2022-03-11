@@ -6,7 +6,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Predicate;
 
+/**
+ * A general column store implementation where the data is stored in disk.
+ */
 public class ColumnStoreDisk extends ColumnStoreAbstract{
+    /**
+     * Buffer size when reading files.
+     */
     protected static final int BUFFER_SIZE = 10240;
 
     public ColumnStoreDisk(HashMap<String, Integer> columnDataTypes) {
@@ -55,6 +61,9 @@ public class ColumnStoreDisk extends ColumnStoreAbstract{
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void store(String column, String value) {
         try {
@@ -72,6 +81,9 @@ public class ColumnStoreDisk extends ColumnStoreAbstract{
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     protected void storeAll(HashMap<String, List<String>> buffer) {
         try {
@@ -94,6 +106,9 @@ public class ColumnStoreDisk extends ColumnStoreAbstract{
 
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Integer> filter(String column, Predicate<Object> predicate) {
         try {
@@ -144,6 +159,9 @@ public class ColumnStoreDisk extends ColumnStoreAbstract{
         return new ArrayList<>();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Integer> filter(String column, Predicate<Object> predicate, List<Integer> indexesToCheck) {
         List<Integer> results = new ArrayList<>();
@@ -192,6 +210,9 @@ public class ColumnStoreDisk extends ColumnStoreAbstract{
         return results;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Integer> getMax(String column, List<Integer> indexesToCheck) {
         List<Integer> results = new ArrayList<>();
@@ -224,6 +245,9 @@ public class ColumnStoreDisk extends ColumnStoreAbstract{
         return results;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Integer> getMin(String column, List<Integer> indexesToCheck) {
         List<Integer> results = new ArrayList<>();
@@ -256,11 +280,17 @@ public class ColumnStoreDisk extends ColumnStoreAbstract{
         return results;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getName() {
         return "disk";
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Object getValue(String column, int index) {
         if (isInvalidColumn(column)) {
@@ -300,6 +330,9 @@ public class ColumnStoreDisk extends ColumnStoreAbstract{
         return null;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void printHead(int until) {
         try {
