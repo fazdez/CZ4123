@@ -1,2 +1,4 @@
 *.store
-ScanResult.csv
+/disk
+/enhanced_disk
+/main_memory

@@ -1,34 +1,41 @@
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.Month;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
         HashMap<String, Integer> dataTypes = new HashMap<>();
-        dataTypes.put("id", ColumnStore.INTEGER_DATATYPE);
-        dataTypes.put("Timestamp", ColumnStore.TIME_DATATYPE);
-        dataTypes.put("Station", ColumnStore.STRING_DATATYPE);
-        dataTypes.put("Temperature", ColumnStore.FLOAT_DATATYPE);
-        dataTypes.put("Humidity", ColumnStore.FLOAT_DATATYPE);
+        dataTypes.put("id", ColumnStoreAbstract.INTEGER_DATATYPE);
+        dataTypes.put("Timestamp", ColumnStoreAbstract.TIME_DATATYPE);
+        dataTypes.put("Station", ColumnStoreAbstract.STRING_DATATYPE);
+        dataTypes.put("Temperature", ColumnStoreAbstract.FLOAT_DATATYPE);
+        dataTypes.put("Humidity", ColumnStoreAbstract.FLOAT_DATATYPE);
 
 
-//        ColumnStoreAbstract cs = new ColumnStoreMM(dataTypes);
-//        ColumnStoreAbstract cs = new ColumnStoreDisk(dataTypes);
-        ColumnStoreAbstract cs = new ColumnStoreDiskEnhanced(dataTypes);
+        ColumnStoreAbstract csMM = new ColumnStoreMM(dataTypes);
+        ColumnStoreAbstract csDisk = new ColumnStoreDisk(dataTypes);
+        ColumnStoreAbstract csDiskEnhanced = new ColumnStoreDiskEnhanced(dataTypes);
+        List<ColumnStoreAbstract> columnStores = Arrays.asList(csMM, csDisk, csDiskEnhanced);
 
-        try {
-            cs.addCSVData("SingaporeWeather.csv");
-            List<Output> results = getExtremeValues(cs, 2009, "Paya Lebar");
-            writeOutput("ScanResult.csv", results);
-            results = getExtremeValues(cs, 2019, "Paya Lebar");
-            writeOutput("ScanResult.csv", results);
-        } catch(Exception e) {
-            e.printStackTrace();
+        System.out.println("------Time Taken------");
+        for (ColumnStoreAbstract cs: columnStores) {
+            try {
+                cs.addCSVData("SingaporeWeather.csv");
+                LocalDateTime startTime = LocalDateTime.now();
+                List<Output> results1 = getExtremeValues(cs, 2009, "Paya Lebar");
+                List<Output> results2 = getExtremeValues(cs, 2019, "Paya Lebar");
+                System.out.println(cs.getName() + ": " + startTime.until(LocalDateTime.now(), ChronoUnit.MILLIS) + "ms");
+
+                writeOutput(cs.getName()+"/ScanResult.csv", results1);
+                writeOutput(cs.getName()+"/ScanResult.csv", results2);
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -94,6 +101,7 @@ public class Main {
         File outputFile = new File(filepath);
         if (!outputFile.exists()) {
             initialized = false;
+            outputFile.getParentFile().mkdirs();
             outputFile.createNewFile();
         }
 

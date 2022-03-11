@@ -58,7 +58,8 @@ public class ColumnStoreDisk extends ColumnStoreAbstract{
     @Override
     protected void store(String column, String value) {
         try {
-            File columnFile = new File(column+".store");
+            File columnFile = new File(getName()+"/"+column+".store");
+            columnFile.getParentFile().mkdirs();
             columnFile.createNewFile();
             if (!columnFile.setWritable(true) || !columnFile.setReadable(true)) {
                 System.out.println("Could not set read/write to file");
@@ -75,7 +76,8 @@ public class ColumnStoreDisk extends ColumnStoreAbstract{
     protected void storeAll(HashMap<String, List<String>> buffer) {
         try {
             for(String column: buffer.keySet()) {
-                File columnFile = new File(column+".store");
+                File columnFile = new File(getName()+"/"+column+".store");
+                columnFile.getParentFile().mkdirs();
                 columnFile.createNewFile();
                 if (!columnFile.setWritable(true) || !columnFile.setReadable(true)) {
                     System.out.println("Could not set read/write to file");
@@ -95,7 +97,7 @@ public class ColumnStoreDisk extends ColumnStoreAbstract{
     @Override
     public List<Integer> filter(String column, Predicate<Object> predicate) {
         try {
-            File file = new File(column+".store");
+            File file = new File(getName()+"/"+column+".store");
             int idx = 0;
             List<Integer> result = new ArrayList<>();
             if (isNotNumberDataType(column)) { //use BufferedReader since it's string
@@ -147,7 +149,7 @@ public class ColumnStoreDisk extends ColumnStoreAbstract{
         List<Integer> results = new ArrayList<>();
         try {
             if (isNotNumberDataType(column)) {
-                File file = new File(column+".store");
+                File file = new File(getName()+"/"+column+".store");
                 BufferedReader bufferedReader = new BufferedReader(new FileReader(file), BUFFER_SIZE);
                 int currIndex = 0;
                 for (int indexToCheck: indexesToCheck) {
@@ -170,7 +172,7 @@ public class ColumnStoreDisk extends ColumnStoreAbstract{
                     if (predicate.test(toCheck)) { results.add(indexToCheck); }
                 }
             } else { //values are stored directly, each taking up 4 bytes. Can skip to index using fileInputStream
-                RandomAccessFile fileInputStream = new RandomAccessFile(column+".store", "r");
+                RandomAccessFile fileInputStream = new RandomAccessFile(getName()+"/"+column+".store", "r");
                 ByteBuffer bbf = ByteBuffer.allocate(4);
                 for (int indexToCheck: indexesToCheck) {
                     //can access directly
@@ -196,7 +198,7 @@ public class ColumnStoreDisk extends ColumnStoreAbstract{
         if (!validationCheckForMinMax(column)) { return results; }
         
         try {
-            RandomAccessFile fileInputStream = new RandomAccessFile(column+".store", "r");
+            RandomAccessFile fileInputStream = new RandomAccessFile(getName()+"/"+column+".store", "r");
             byte[] buffer = new byte[4];
             float maximum = Float.MIN_VALUE;
             float valueAtIndex;
@@ -228,7 +230,7 @@ public class ColumnStoreDisk extends ColumnStoreAbstract{
         if (!validationCheckForMinMax(column)) { return results; }
 
         try {
-            RandomAccessFile fileInputStream = new RandomAccessFile(column+".store", "r");
+            RandomAccessFile fileInputStream = new RandomAccessFile(getName()+"/"+column+".store", "r");
             byte[] buffer = new byte[4];
             float minimum = Float.MAX_VALUE;
             float valueAtIndex;
@@ -255,12 +257,22 @@ public class ColumnStoreDisk extends ColumnStoreAbstract{
     }
 
     @Override
+    public String getName() {
+        return "disk";
+    }
+
+    @Override
     public Object getValue(String column, int index) {
+        if (isInvalidColumn(column)) {
+            System.out.println("invalid column");
+            return null;
+        }
+
         try {
             if (isNotNumberDataType(column)) {
                 //values are stored as string, separated by newlines
                 //cannot skip index, must manually call nextLine() using simple Scanner class
-                File file = new File(column+".store");
+                File file = new File(getName()+"/"+column+".store");
                 Scanner sc = new Scanner(file);
                 while (sc.hasNextLine() && index > 0) {
                     sc.nextLine();
@@ -274,7 +286,7 @@ public class ColumnStoreDisk extends ColumnStoreAbstract{
                     return LocalDateTime.parse(value, DateTimeFormatter.ofPattern(DTFORMATSTRING));
                 }
             } else { //values are stored directly, each taking up 4 bytes. Can skip to index using RandomAccessFile
-                RandomAccessFile fileInputStream = new RandomAccessFile(column+".store", "r");
+                RandomAccessFile fileInputStream = new RandomAccessFile(getName()+"/"+column+".store", "r");
                 ByteBuffer bbf = ByteBuffer.allocate(4);
                 fileInputStream.seek(index* 4L);
                 if(fileInputStream.read(bbf.array()) != 4) {
@@ -294,7 +306,7 @@ public class ColumnStoreDisk extends ColumnStoreAbstract{
             for (String column: columnHeaders) {
                 System.out.print(column+": ");
                 if (isNotNumberDataType(column)) {
-                    Scanner sc = new Scanner(new File(column+".store"));
+                    Scanner sc = new Scanner(new File(getName()+"/"+column+".store"));
                     int temp = until;
                     while (temp > 0) {
                         System.out.print(sc.nextLine());
@@ -302,7 +314,7 @@ public class ColumnStoreDisk extends ColumnStoreAbstract{
                         temp--;
                     }
                 } else {
-                    FileInputStream fileInputStream = new FileInputStream(column+".store");
+                    FileInputStream fileInputStream = new FileInputStream(getName()+"/"+column+".store");
                     int temp = until;
                     while (temp > 0) {
                         System.out.print(convertBytesToNumber(fileInputStream.readNBytes(4), columnDataTypes.get(column)));

@@ -112,6 +112,11 @@ public class ColumnStoreMM extends ColumnStoreAbstract {
     }
 
     @Override
+    public String getName() {
+        return "main_memory";
+    }
+
+    @Override
     public Object getValue(String column, int index) {
         return data.get(column).get(index);
     }

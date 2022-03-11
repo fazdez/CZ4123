@@ -61,6 +61,11 @@ public class ColumnStoreDiskEnhanced extends ColumnStoreDisk{
         }
     }
 
+    @Override
+    public String getName() {
+        return "enhanced_disk";
+    }
+
     private void handleStoreStation(FileOutputStream fileOutputStream, String stationName) {
         if (stationName.isBlank()) {
             stationName = "M"; //represents null
@@ -120,7 +125,7 @@ public class ColumnStoreDiskEnhanced extends ColumnStoreDisk{
     private List<Integer> getYear(int year) {
         List<Integer> results = new ArrayList<>();
         try {
-            FileInputStream inputStream = new FileInputStream("Timestamp.store");
+            FileInputStream inputStream = new FileInputStream(getName()+"/Timestamp.store");
             ByteBuffer bbf = ByteBuffer.allocate(BUFFER_SIZE);
             int index = 0;
             long startRange = LocalDateTime.of(year, 1, 1, 0, 0, 0).toEpochSecond(z);
@@ -145,7 +150,7 @@ public class ColumnStoreDiskEnhanced extends ColumnStoreDisk{
     private List<Integer> getStation(String station, List<Integer> indexesToCheck) {
         List<Integer> results = new ArrayList<>();
         try {
-            RandomAccessFile fileInput = new RandomAccessFile("Station.store", "r");
+            RandomAccessFile fileInput = new RandomAccessFile(getName()+"/Station.store", "r");
             for(int index: indexesToCheck) {
                 //since station is just 1 byte, can access directly via index
                 fileInput.seek(index);
@@ -165,7 +170,7 @@ public class ColumnStoreDiskEnhanced extends ColumnStoreDisk{
     private List<Integer> getMonth(int month, List<Integer> indexesToCheck) {
         List<Integer> results = new ArrayList<>();
         try {
-            RandomAccessFile fileInput = new RandomAccessFile("Timestamp.store", "r");
+            RandomAccessFile fileInput = new RandomAccessFile(getName()+"/Timestamp.store", "r");
             ByteBuffer bbf = ByteBuffer.allocate(8);
             for(int index: indexesToCheck) {
                 bbf.clear();
@@ -189,7 +194,7 @@ public class ColumnStoreDiskEnhanced extends ColumnStoreDisk{
         results.put(MAX_KEY, new ArrayList<>());
 
         try {
-            RandomAccessFile fileInput = new RandomAccessFile(column+".store", "r");
+            RandomAccessFile fileInput = new RandomAccessFile(getName()+"/"+column+".store", "r");
             ByteBuffer bbf = ByteBuffer.allocate(4);
             float min = Float.MAX_VALUE;
             float max = Float.MIN_VALUE;
@@ -227,9 +232,9 @@ public class ColumnStoreDiskEnhanced extends ColumnStoreDisk{
         HashMap<String, List<Integer>> scanResultsForHumidity = sharedScanningMaxMin("Humidity", monthIndexes);
 
         try {
-            RandomAccessFile tempFile = new RandomAccessFile("Temperature.store", "r");
-            RandomAccessFile humidityFile = new RandomAccessFile("Humidity.store", "r");
-            RandomAccessFile timeFile = new RandomAccessFile("Timestamp.store", "r");
+            RandomAccessFile tempFile = new RandomAccessFile(getName()+"/Temperature.store", "r");
+            RandomAccessFile humidityFile = new RandomAccessFile(getName()+"/Humidity.store", "r");
+            RandomAccessFile timeFile = new RandomAccessFile(getName()+"/Timestamp.store", "r");
 
             addResults(results, scanResultsForHumidity.get(MAX_KEY), humidityFile, timeFile, station, Output.MAX_HUMIDITY);
             addResults(results, scanResultsForHumidity.get(MIN_KEY), humidityFile, timeFile, station, Output.MIN_HUMIDITY);

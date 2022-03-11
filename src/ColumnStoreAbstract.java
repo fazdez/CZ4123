@@ -95,6 +95,8 @@ public abstract class ColumnStoreAbstract {
 
     public abstract List<Integer> getMin(String column, List<Integer> indexesToCheck);
 
+    public abstract String getName();
+
     /**
      * gets the value from a column based on the index.
      * @param column column to retrieve
