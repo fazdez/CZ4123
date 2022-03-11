@@ -1,6 +1,9 @@
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+/**
+ * This class represents a row in "ScanResult.csv"
+ */
 public class Output {
     public static final int MAX_HUMIDITY = 0;
     public static final int MAX_TEMP = 1;

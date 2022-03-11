@@ -39,6 +39,13 @@ public class Main {
         }
     }
 
+    /**
+     * Gets the extreme values for each month in the year specified and station specified.
+     * @param data the column store
+     * @param year the year given
+     * @param station the station given
+     * @return a list of Output objects representing the extreme values.
+     */
     private static List<Output> getExtremeValues(ColumnStoreAbstract data, int year, String station) {
         if (data instanceof ColumnStoreDiskEnhanced) {
             return ((ColumnStoreDiskEnhanced) data).getExtremeValues(year, station); //use custom implementation
@@ -60,6 +67,15 @@ public class Main {
         return result;
     }
 
+    /**
+     * gets the extreme values for the specified month in the given column for the given station.
+     * @param data the column store
+     * @param currMonth the list of indexes representing the current month (and year)
+     * @param column the column given
+     * @param valueType "max" or "min"
+     * @param stationName the station given
+     * @return
+     */
     private static List<Output> processMonth(ColumnStoreAbstract data, List<Integer> currMonth, String column, String valueType, String stationName) {
         List<Output> result = new ArrayList<>();
         Set<Integer> addedDays = new HashSet<>();
@@ -96,6 +112,12 @@ public class Main {
         return result;
     }
 
+    /**
+     * for each value in the output list, write to the file given.
+     * @param filepath file to write
+     * @param toWrite list of Output objects
+     * @throws IOException
+     */
     private static void writeOutput(String filepath, List<Output> toWrite) throws IOException {
         boolean initialized = true;
         File outputFile = new File(filepath);

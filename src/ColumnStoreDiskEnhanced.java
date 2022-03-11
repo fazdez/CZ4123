@@ -1,5 +1,6 @@
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
@@ -13,9 +14,9 @@ import java.util.*;
  * 3. Fixing the variable-length string "Timestamp" to long (unix timestamp).
  */
 public class ColumnStoreDiskEnhanced extends ColumnStoreDisk{
-    private static final byte NULL_STATION = 'M';
-    private static final byte PAYA_LEBAR_STATION = 'P';
-    private static final byte CHANGI_STATION = 'C';
+    private static final byte NULL_STATION = StandardCharsets.US_ASCII.encode("M").get(0);
+    private static final byte PAYA_LEBAR_STATION = StandardCharsets.US_ASCII.encode("P").get(0);
+    private static final byte CHANGI_STATION = StandardCharsets.US_ASCII.encode("C").get(0);
     private static final long NULL_TIMESTAMP = 0;
     private static final String MIN_KEY = "min";
     private static final String MAX_KEY = "max";
@@ -60,11 +61,16 @@ public class ColumnStoreDiskEnhanced extends ColumnStoreDisk{
         return "enhanced_disk";
     }
 
+    /**
+     * Custom implementation to store values from column "Station". Stores value as a single byte instead of string.
+     * @param fileOutputStream the file to write to
+     * @param stationName the value to store
+     */
     private void handleStoreStation(FileOutputStream fileOutputStream, String stationName) {
         if (stationName.isBlank()) {
             stationName = "M"; //represents null
         }
-        byte toStore = stationName.getBytes()[0]; //then 'P' represents paya lebar, 'C' represents changi, 'M' is null
+        byte toStore = StandardCharsets.US_ASCII.encode(stationName).get(0); //then 'P' represents paya lebar, 'C' represents changi, 'M' is null
         try {
             fileOutputStream.write(toStore);
         } catch (Exception e) {
@@ -72,6 +78,11 @@ public class ColumnStoreDiskEnhanced extends ColumnStoreDisk{
         }
     }
 
+    /**
+     * Custom implementation to store values from column "Timestamp". Stores value as a long instead of string.
+     * @param fileOutputStream the file to write to
+     * @param timeStamp the value to store
+     */
     private void handleStoreTimestamp(FileOutputStream fileOutputStream, LocalDateTime timeStamp) {
         long toStore = 0;
         if (timeStamp != null) {
@@ -116,6 +127,11 @@ public class ColumnStoreDiskEnhanced extends ColumnStoreDisk{
         return results;
     }
 
+    /**
+     * Scans the "Timestamp" column and returns the indexes whose time matches the year input.
+     * @param year the year input
+     * @return the matched indexes
+     */
     private List<Integer> getYear(int year) {
         List<Integer> results = new ArrayList<>();
         try {
@@ -141,6 +157,12 @@ public class ColumnStoreDiskEnhanced extends ColumnStoreDisk{
         return results;
     }
 
+    /**
+     * Scans the indexes in the given list for the column "Station", and returns the indexes whose value matches the station input.
+     * @param station the station input
+     * @param indexesToCheck the indexes list given
+     * @return the matched indexes
+     */
     private List<Integer> getStation(String station, List<Integer> indexesToCheck) {
         List<Integer> results = new ArrayList<>();
         try {
@@ -161,6 +183,12 @@ public class ColumnStoreDiskEnhanced extends ColumnStoreDisk{
         return results;
     }
 
+    /**
+     * Scans the indexes in the given list for the column "Timestamp", and returns the indexes whose time matches the month input.
+     * @param month the month input
+     * @param indexesToCheck the indexes list given
+     * @return the matched indexes
+     */
     private List<Integer> getMonth(int month, List<Integer> indexesToCheck) {
         List<Integer> results = new ArrayList<>();
         try {
@@ -182,6 +210,15 @@ public class ColumnStoreDiskEnhanced extends ColumnStoreDisk{
         return results;
     }
 
+    /**
+     * Scans the indexes in the given list for the column given, and returns the maximum and minimum values among all the indexes scanned.
+     * <p>Example of output:
+     * { "min": [index1, index2], "max": [index3] }
+     * </p>
+     * @param column "Humidity" or "Temperature" columns
+     * @param indexesToCheck the indexes list given
+     * @return the minimum and maximum values
+     */
     private HashMap<String, List<Integer>> sharedScanningMaxMin(String column, List<Integer> indexesToCheck) {
         HashMap<String, List<Integer>> results = new HashMap<>();
         results.put(MIN_KEY, new ArrayList<>());
@@ -220,6 +257,16 @@ public class ColumnStoreDiskEnhanced extends ColumnStoreDisk{
         return results;
     }
 
+    /**
+     * Scans the indexes in the given list, gets those indexes that matches the month given, 
+     * and finds the extreme values (min/max humidity/temperature) within these indexes.
+     *
+     * <p>Creates a new Output object for each extreme value, using the helper function {@link #addResults(List, List, RandomAccessFile, RandomAccessFile, String, int)}</p>
+     * @param month the month given
+     * @param qualifiedIndexes the indexes list given
+     * @param results to append Output objects to
+     * @param station the station given
+     */
     private void scanValues(int month, List<Integer> qualifiedIndexes, List<Output> results, String station) {
         List<Integer> monthIndexes = getMonth(month, qualifiedIndexes);
         HashMap<String, List<Integer>> scanResultsForTemp = sharedScanningMaxMin("Temperature", monthIndexes);
@@ -239,6 +286,21 @@ public class ColumnStoreDiskEnhanced extends ColumnStoreDisk{
         }
     }
 
+    /**
+     * For each index in the given list:
+     * <ol>
+     *     <li>Scan its value using the given fileInput</li>
+     *     <li>Get its timestamp using the given timeFile</li>
+     *     <li>Checks if the date of this timestamp has already been added into the results list. If yes, skip this index.</li>
+     *     <li>Else, create a new Output object based on value, timestamp, station given and output type given and add it to results.</li>
+     * </ol>
+     * @param results the list of output objects
+     * @param indexes the indexes list given
+     * @param fileInput the input file for the indexes
+     * @param timeFile the timestamp file
+     * @param station the station given
+     * @param type the type given
+     */
     private void addResults(List<Output> results, List<Integer> indexes, RandomAccessFile fileInput, RandomAccessFile timeFile, String station, int type) {
         try {
             List<Output> toAdd = new ArrayList<>();
@@ -275,7 +337,7 @@ public class ColumnStoreDiskEnhanced extends ColumnStoreDisk{
     }
 
     /**
-     * concatenate a list with the list to modify in a synchronized manner.
+     * concatenate a list with the list to modify in a synchronized manner to prevent concurrency issues.
      * @param list list to modify
      * @param toAdd the list to add
      */

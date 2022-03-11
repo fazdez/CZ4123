@@ -1,5 +1,3 @@
-import org.jetbrains.annotations.NotNull;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.time.LocalDateTime;
@@ -8,6 +6,9 @@ import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.function.Predicate;
 
+/**
+ * An abstract class representing a column store.
+ */
 public abstract class ColumnStoreAbstract {
     public static final int STRING_DATATYPE = 0;
     public static final int INTEGER_DATATYPE = 1;
@@ -15,10 +16,27 @@ public abstract class ColumnStoreAbstract {
     public static final int TIME_DATATYPE= 3;
     protected static final String DTFORMATSTRING = "yyyy-MM-dd HH:mm";
 
+    /**
+     * The registered column headers with this column store.
+     */
     protected final Set<String> columnHeaders;
+
+    /**
+     * The registered column headers, together with its data type.
+     * Only the following data types are accepted:
+     *
+     * {@link #STRING_DATATYPE},
+     * {@link #INTEGER_DATATYPE},
+     * {@link #FLOAT_DATATYPE} and
+     * {@link #TIME_DATATYPE}.
+     */
     protected final HashMap<String, Integer> columnDataTypes;
 
-    public ColumnStoreAbstract(@NotNull HashMap<String, Integer> columnDataTypes) {
+    /**
+     * @param columnDataTypes User has to specify, for each column, 1. the column name 2. the corresponding data type.
+     * @see #columnDataTypes
+     */
+    public ColumnStoreAbstract(HashMap<String, Integer> columnDataTypes) {
         columnHeaders = columnDataTypes.keySet();
         this.columnDataTypes = columnDataTypes;
     }
@@ -85,14 +103,52 @@ public abstract class ColumnStoreAbstract {
      */
     protected abstract void storeAll(HashMap<String, List<String>> buffer);
 
+    /**
+     * Scans all the indexes of the column and returns the indexes whose values match the predicate.
+     * @param column the column to check
+     * @param predicate the predicate logic
+     * @return list of matched indexes
+     */
     public abstract List<Integer> filter(String column, Predicate<Object> predicate);
 
+    /**
+     * Scans the given indexes of the column and returns the indexes whose values match the predicate.
+     * @param column the column to check
+     * @param predicate the predicate logic
+     * @param indexesToCheck the given indexes
+     * @return a subset of the given list, that matches the predicate
+     */
     public abstract List<Integer> filter(String column, Predicate<Object> predicate, List<Integer> indexesToCheck);
 
+    /**
+     * Scans the given indexes of the column and returns the indexes whose values are the largest among all the scanned values.
+     *
+     * <p>The implementation by extending classes is recommended to perform a validation check to ensure column type is a number.</p>
+     *
+     * @param column the column to check
+     * @param indexesToCheck the given indexes
+     * @return a subset of the given list, that represents maximum value
+     * 
+     * @see #validationCheckForMinMax(String) 
+     */
     public abstract List<Integer> getMax(String column, List<Integer> indexesToCheck);
 
+    /**
+     * Scans the given indexes of the column and returns the indexes whose values are the smallest among all the scanned values.
+     *
+     * <p>The implementation by extending classes is recommended to perform a validation check to ensure column type is a number.</p>
+     *
+     * @param column the column to check
+     * @param indexesToCheck the given indexes
+     * @return a subset of the given list, that represents minimum value
+     * 
+     * @see #validationCheckForMinMax(String)
+     */
     public abstract List<Integer> getMin(String column, List<Integer> indexesToCheck);
 
+    /**
+     * @return the name of this column store.
+     */
     public abstract String getName();
 
     /**
